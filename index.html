@@ -1790,7 +1790,10 @@ function renderMetrics(d) {
   setText('vixSub', d.vix ? `India VIX: ${d.vix.toFixed(2)}` : 'India VIX: N/A');
 
   const gexEl = document.getElementById('gexValue');
-  gexEl.textContent = d.total_gex.toFixed(3) + 'B';
+  const gexCr = d.total_gex / 1e7;  // Convert to Crores
+  const gexAbs = Math.abs(gexCr);
+  const gexStr = gexAbs >= 1000 ? (gexCr/1000).toFixed(2)+'K Cr' : gexCr.toFixed(1)+' Cr';
+  gexEl.textContent = gexStr;
   const gexCard = document.getElementById('gexCard');
   if (d.total_gex > 0.5) {
     gexEl.style.color = 'var(--green)';
@@ -1806,7 +1809,7 @@ function renderMetrics(d) {
     setText('gexSub', 'Neutral GEX — Transitional');
   }
 
-  const pcrVol = d.pcr_vol;
+  const pcrVol = d.pcr_vol ?? d.pcr_oi ?? 1.0;
   setText('pcrVolValue', pcrVol.toFixed(3));
   const pcrVolCard = document.getElementById('pcrVolCard');
   if (pcrVol > 1.1) {
@@ -1826,21 +1829,30 @@ function renderSMCStructure(d) {
   const ms = d.market_structure;
   const ob = d.order_blocks;
 
-  // Price ruler position
-  const pos = Math.max(2, Math.min(98, ms.position_pct));
+  // Compute position_pct from spot vs range
+  const rangeHigh = ms.range_high ?? (d.spot + 500);
+  const rangeLow  = ms.range_low  ?? (d.spot - 500);
+  const rawPct = ((d.spot - rangeLow) / (rangeHigh - rangeLow)) * 100;
+  const pos = Math.max(2, Math.min(98, isNaN(rawPct) ? 50 : rawPct));
   document.getElementById('rulerMarker').style.left = pos + '%';
 
   // Zone badge
   const badge = document.getElementById('zoneBadge');
-  badge.textContent = ms.zone;
+  badge.textContent = ms.zone ?? '—';
   badge.className = 'metric-badge ' +
     (ms.zone === 'PREMIUM' ? 'badge-bear' : ms.zone === 'DISCOUNT' ? 'badge-bull' : 'badge-neu');
-  setText('zoneDesc', ms.zone_desc);
+  const zoneDescMap = {
+    PREMIUM:     'Price above 61.8% Fib — Smart money distributing',
+    DISCOUNT:    'Price below 38.2% Fib — Smart money accumulating',
+    EQUILIBRIUM: 'Price in fair value zone — No directional edge',
+  };
+  setText('zoneDesc', zoneDescMap[ms.zone] ?? ms.zone ?? '');
 
   // OB values
   setText('ceOBVal', ob.supply_strike ? fmt(ob.supply_strike) : '—');
   setText('peOBVal', ob.demand_strike ? fmt(ob.demand_strike) : '—');
-  setText('eqVal',   fmt(ms.equilibrium));
+  const eqLevel = ms.fib_618 ? ((ms.fib_618 + ms.fib_382) / 2) : d.spot;
+  setText('eqVal', fmt(Math.round(eqLevel)));
 
   // IV Skew
   const skewEl = document.getElementById('ivSkewVal');
@@ -1875,24 +1887,24 @@ function renderSMCStructure(d) {
     }
   }
 
-  // Institutional bias
-  const biasEmojis = { 'BULLISH': '🟢', 'BEARISH': '🔴', 'NEUTRAL': '🔵' };
-  setText('instBiasEmoji', biasEmojis[ms.inst_bias] || '—');
-  setText('instBiasDesc', ms.inst_desc);
+  // Institutional bias — derive from order_flow.bias
+  const biasEmojis = { 'BULLISH': '🟢', 'BEARISH': '🔴', 'NEUTRAL': '🔵', 'BULLISH_UNWIND': '🟡', 'BEARISH_UNWIND': '🟠' };
+  const flowBias = d.order_flow?.bias ?? 'NEUTRAL';
+  setText('instBiasEmoji', biasEmojis[flowBias] || '⚡');
+  setText('instBiasDesc', flowBias.replace('_', ' '));
 
-  // GEX Regime
+  // GEX Regime — derive from market_structure.gex_regime
   const gexIcon = document.getElementById('gexIcon');
-  setText('gexRegimeTitle', ms.gex_regime.replace('_', ' '));
-  setText('gexRegimeDesc', ms.gex_desc);
-  if (ms.gex_bias === 'RANGE_BOUND' || ms.gex_bias === 'STABLE') {
+  const gexRegime = ms.gex_regime ?? (d.total_gex > 0 ? 'POSITIVE' : 'NEGATIVE');
+  setText('gexRegimeTitle', gexRegime.replace('_', ' '));
+  const gexDescMap = { 'POSITIVE': 'Dealers buy dips — market stabilizing', 'NEGATIVE': 'Dealers amplify moves — explosive potential' };
+  setText('gexRegimeDesc', gexDescMap[gexRegime] ?? 'GEX transitional zone');
+  if (gexRegime === 'POSITIVE') {
     gexIcon.className = 'gex-icon positive';
     gexIcon.textContent = '🟢';
-  } else if (ms.gex_bias === 'TRENDING' || ms.gex_bias === 'EXPLOSIVE') {
+  } else {
     gexIcon.className = 'gex-icon negative';
     gexIcon.textContent = '🔥';
-  } else {
-    gexIcon.className = 'gex-icon neutral';
-    gexIcon.textContent = '⚡';
   }
 
   // Gamma Flip
@@ -2004,14 +2016,14 @@ function renderCharts(d) {
 
   // GEX Chart
   const gexDisplay = gexData.filter(g => display.some(s => s.strike === g.strike));
-  setText('gexChartTotal', `Total: ${d.total_gex.toFixed(3)}B`);
+  setText('gexChartTotal', `Total GEX: ${(d.total_gex/1e7).toFixed(1)} Cr`);
   gexChart.data.labels = gexDisplay.map(g => g.strike);
-  gexChart.data.datasets[0].data = gexDisplay.map(g => g.net_gex);
+  gexChart.data.datasets[0].data = gexDisplay.map(g => g.gex);
   gexChart.data.datasets[0].backgroundColor = gexDisplay.map(g =>
-    g.net_gex >= 0 ? 'rgba(0,255,136,0.5)' : 'rgba(255,68,102,0.5)'
+    g.gex >= 0 ? 'rgba(0,255,136,0.5)' : 'rgba(255,68,102,0.5)'
   );
   gexChart.data.datasets[0].borderColor = gexDisplay.map(g =>
-    g.net_gex >= 0 ? 'rgba(0,255,136,0.8)' : 'rgba(255,68,102,0.8)'
+    g.gex >= 0 ? 'rgba(0,255,136,0.8)' : 'rgba(255,68,102,0.8)'
   );
   gexChart.update();
 
