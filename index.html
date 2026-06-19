@@ -2042,30 +2042,34 @@ function renderCharts(d) {
 
 // ── SIGNALS ────────────────────────────────────────────────────────
 function renderSignals(d) {
-  const signals = d.signals || [];
-  const best = d.best_signal || {};
+  const signals = d.signals || {};
+  const bestKey = d.best_signal || 'LONG_CALL';
+  const bestSigObj = signals[bestKey] || {};
 
   // Best Signal Banner
   const banner = document.getElementById('bestSignalBanner');
-  const colorMap = { 'BUY_CALL': 'var(--green)', 'BUY_PUT': 'var(--red)', 'SHORT_STRADDLE': 'var(--gold)' };
-  const glowMap  = { 'BUY_CALL': 'rgba(0,255,136,0.1)', 'BUY_PUT': 'rgba(255,68,102,0.1)', 'SHORT_STRADDLE': 'rgba(255,204,0,0.1)' };
-  const col = colorMap[best.type] || 'var(--text)';
-  banner.style.setProperty('--banner-glow', glowMap[best.type] || 'transparent');
+  const colorMap = { 'LONG_CALL': 'var(--green)', 'LONG_PUT': 'var(--red)', 'SHORT_STRADDLE': 'var(--gold)' };
+  const glowMap  = { 'LONG_CALL': 'rgba(0,255,136,0.1)', 'LONG_PUT': 'rgba(255,68,102,0.1)', 'SHORT_STRADDLE': 'rgba(255,204,0,0.1)' };
+  const labelMap = { 'LONG_CALL': 'LONG CALL', 'LONG_PUT': 'LONG PUT', 'SHORT_STRADDLE': 'SHORT STRADDLE' };
+  const emojiMap = { 'LONG_CALL': '🟢', 'LONG_PUT': '🔴', 'SHORT_STRADDLE': '⚡' };
+  
+  const col = colorMap[bestKey] || 'var(--text)';
+  banner.style.setProperty('--banner-glow', glowMap[bestKey] || 'transparent');
   banner.style.borderColor = col;
 
-  setText('bannerEmoji', best.emoji || '—');
+  setText('bannerEmoji', emojiMap[bestKey] || '—');
   const nameEl = document.getElementById('bannerName');
-  nameEl.textContent = best.label || '—';
+  nameEl.textContent = labelMap[bestKey] || '—';
   nameEl.style.color = col;
   const scoreEl = document.getElementById('bannerScore');
-  scoreEl.textContent = (best.score || 0) + '%';
+  scoreEl.textContent = (bestSigObj.score || 0) + '%';
   scoreEl.style.color = col;
-  setText('bannerStrategy', best.strategy || '—');
+  setText('bannerStrategy', bestSigObj.entry ? `${bestSigObj.entry} | ${bestSigObj.sl} | ${bestSigObj.target}` : '—');
 
   // Individual signal cards
-  const callSig    = signals.find(s => s.type === 'BUY_CALL')      || {};
-  const putSig     = signals.find(s => s.type === 'BUY_PUT')        || {};
-  const straddleSig= signals.find(s => s.type === 'SHORT_STRADDLE') || {};
+  const callSig    = signals['LONG_CALL'] || {};
+  const putSig     = signals['LONG_PUT'] || {};
+  const straddleSig= signals['SHORT_STRADDLE'] || {};
 
   renderSignalCard('call',     callSig,     'callScore',     'callRingFill',     'callStrength',     'callReasons',     'callCautions',     'callBar',     'callConfluenceText',     'callStrategy');
   renderSignalCard('put',      putSig,      'putScore',      'putRingFill',      'putStrength',      'putReasons',      'putCautions',      'putBar',      'putConfluenceText',      'putStrategy');
@@ -2081,12 +2085,14 @@ function renderSignalCard(type, sig, scoreId, ringId, strengthId, reasonsId, cau
   const offset = circumference - (score / 100) * circumference;
   ring.style.strokeDashoffset = offset;
 
+  const strengthStr = score > 80 ? 'STRONG' : score > 50 ? 'MODERATE' : 'WEAK';
   const strengthEl = document.getElementById(strengthId);
-  strengthEl.textContent = sig.strength || '—';
-  strengthEl.className = 'signal-strength strength-' + (sig.strength || 'weak').toLowerCase();
+  strengthEl.textContent = strengthStr;
+  strengthEl.className = 'signal-strength strength-' + strengthStr.toLowerCase();
 
   document.getElementById(barId).style.width = score + '%';
-  setText(confTextId, `${score}/100 confluence — ${sig.strength || '—'}`);
+  setText(confTextId, `${score}/100 confluence — ${strengthStr}`);
+  setText(stratId, sig.entry ? `${sig.entry} • ${sig.sl} • ${sig.target}` : '—');
 
   // Reasons
   const reasonsEl = document.getElementById(reasonsId);
