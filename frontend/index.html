@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nifty SMC Options Intelligence — AI Trader</title>
+<meta name="description" content="Smart Money Concepts + Order Flow Options Intelligence for Nifty. GEX, Order Blocks, Gamma Flip, AI Signals."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   DESIGN SYSTEM — SMC TRADING TERMINAL
+═══════════════════════════════════════════════════════════ */
+:root {
+  --bg:          #070b14;
+  --surface:     #0d1117;
+  --card:        #111827;
+  --card2:       #151e2d;
+  --border:      rgba(255,255,255,0.06);
+  --border2:     rgba(255,255,255,0.1);
+
+  --green:       #00ff88;
+  --green-dim:   rgba(0,255,136,0.12);
+  --green-glow:  rgba(0,255,136,0.3);
+  --red:         #ff4466;
+  --red-dim:     rgba(255,68,102,0.12);
+  --red-glow:    rgba(255,68,102,0.3);
+  --gold:        #ffcc00;
+  --gold-dim:    rgba(255,204,0,0.12);
+  --gold-glow:   rgba(255,204,0,0.3);
+  --blue:        #4488ff;
+  --blue-dim:    rgba(68,136,255,0.12);
+  --cyan:        #00d4ff;
+  --purple:      #a855f7;
+  --orange:      #ff8c42;
+
+  --text:        #e2e8f0;
+  --text-muted:  #64748b;
+  --text-dim:    #94a3b8;
+
+  --mono:        'JetBrains Mono', monospace;
+  --sans:        'Inter', sans-serif;
+
+  --radius:      12px;
+  --radius-sm:   8px;
+  --glow-green:  0 0 20px rgba(0,255,136,0.15);
+  --glow-red:    0 0 20px rgba(255,68,102,0.15);
+  --glow-gold:   0 0 20px rgba(255,204,0,0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animated background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(0,255,136,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(68,136,255,0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── TYPOGRAPHY ── */
+h1, h2, h3, h4 { font-weight: 700; line-height: 1.2; }
+.mono { font-family: var(--mono); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════════════ */
+.container { max-width: 1600px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+/* ── HEADER ── */
+.header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(13,17,23,0.95);
+  backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: var(--glow-green);
+}
+
+.brand-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  background: linear-gradient(90deg, var(--green), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.spot-display {
+  text-align: center;
+}
+
+.spot-value {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -1px;
+}
+
+.spot-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.header-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+
+.header-meta span {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-muted);
+}
+
+.header-meta span.highlight { color: var(--gold); }
+
+.btn-refresh {
+  background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,212,255,0.15));
+  border: 1px solid rgba(0,255,136,0.3);
+  color: var(--green);
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.btn-refresh:hover {
+  background: linear-gradient(135deg, rgba(0,255,136,0.25), rgba(0,212,255,0.25));
+  box-shadow: var(--glow-green);
+  transform: translateY(-1px);
+}
+
+.btn-refresh.spinning .refresh-icon { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.status-dot {
+  width: 7px; height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── MAIN CONTENT ── */
+.main { padding: 24px 0 60px; }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── GRID LAYOUTS ── */
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+
+.mb-24 { margin-bottom: 24px; }
+.mb-16 { margin-bottom: 16px; }
+
+/* ─────────────────────────────────────────────────────────
+   METRIC CARD
+───────────────────────────────────────────────────────── */
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.metric-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent, transparent);
+}
+
+.metric-card.bullish { --accent: linear-gradient(90deg, transparent, var(--green), transparent); }
+.metric-card.bearish { --accent: linear-gradient(90deg, transparent, var(--red), transparent); }
+.metric-card.neutral { --accent: linear-gradient(90deg, transparent, var(--blue), transparent); }
+.metric-card.gold    { --accent: linear-gradient(90deg, transparent, var(--gold), transparent); }
+
+.metric-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.metric-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.metric-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.badge-bull { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+.badge-bear { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,68,102,0.2); }
+.badge-neu  { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(68,136,255,0.2); }
+.badge-gold { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(255,204,0,0.2); }
+
+/* ─────────────────────────────────────────────────────────
+   SMC PANEL (Market Structure)
+───────────────────────────────────────────────────────── */
+.smc-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.smc-panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* Price Ruler */
+.price-ruler {
+  position: relative;
+  height: 60px;
+  margin: 16px 0;
+}
+
+.ruler-track {
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--green-dim) 0%, var(--blue-dim) 50%, var(--red-dim) 100%);
+  transform: translateY(-50%);
+  border: 1px solid var(--border2);
+}
+
+.ruler-zones {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0; right: 0;
+  height: 6px;
+  display: flex;
+}
+
+.zone-discount { flex: 0 0 38.2%; background: rgba(0,255,136,0.2); border-radius: 3px 0 0 3px; }
+.zone-eq       { flex: 0 0 23.6%; background: rgba(68,136,255,0.1); }
+.zone-premium  { flex: 0 0 38.2%; background: rgba(255,68,102,0.2); border-radius: 0 3px 3px 0; }
+
+.ruler-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px; height: 14px;
+  background: var(--gold);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--gold);
+  z-index: 2;
+  transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ruler-labels {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.ruler-labels span:nth-child(2) { color: var(--blue); }
+
+.ruler-ob-markers {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+}
+
+.ob-marker {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  opacity: 0.6;
+}
+
+.ob-marker.supply { background: var(--red); }
+.ob-marker.demand { background: var(--green); }
+
+.ob-marker::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  white-space: nowrap;
+  font-family: var(--mono);
+}
+
+.ob-marker.supply::after { color: var(--red); }
+.ob-marker.demand::after { color: var(--green); }
+
+/* SMC Info Row */
+.smc-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.smc-info-item {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.smc-info-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.smc-info-value {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ─────────────────────────────────────────────────────────
+   ORDER FLOW PANEL
+───────────────────────────────────────────────────────── */
+.flow-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.flow-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.flow-bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.flow-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+  position: relative;
+}
+
+.flow-bar-fill.green { background: linear-gradient(90deg, rgba(0,255,136,0.5), var(--green)); }
+.flow-bar-fill.red   { background: linear-gradient(90deg, rgba(255,68,102,0.5), var(--red)); }
+
+.flow-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 60px;
+  text-align: right;
+}
+
+/* ─────────────────────────────────────────────────────────
+   CHART CARDS
+───────────────────────────────────────────────────────── */
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chart-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--card2);
+  color: var(--text-muted);
+}
+
+.chart-wrap {
+  position: relative;
+  height: 280px;
+}
+
+/* ─────────────────────────────────────────────────────────
+   SIGNAL CARDS
+───────────────────────────────────────────────────────── */
+.signal-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.signal-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, var(--signal-glow), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.signal-card:hover::before { opacity: 1; }
+.signal-card:hover { border-color: var(--signal-color, var(--border2)); transform: translateY(-2px); }
+
+.signal-card.call   { --signal-glow: rgba(0,255,136,0.08); --signal-color: rgba(0,255,136,0.3); }
+.signal-card.put    { --signal-glow: rgba(255,68,102,0.08); --signal-color: rgba(255,68,102,0.3); }
+.signal-card.straddle { --signal-glow: rgba(255,204,0,0.08); --signal-color: rgba(255,204,0,0.3); }
+
+.signal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.signal-type {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.signal-emoji {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.signal-label {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.signal-label.call     { color: var(--green); }
+.signal-label.put      { color: var(--red); }
+.signal-label.straddle { color: var(--gold); }
+
+.signal-strength {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.strength-strong  { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-glow); }
+.strength-moderate { background: var(--gold-dim); color: var(--gold); border: 1px solid var(--gold-glow); }
+.strength-weak    { background: rgba(100,116,139,0.2); color: var(--text-muted); border: 1px solid rgba(100,116,139,0.3); }
+
+/* Score Ring */
+.score-ring-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.score-ring {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+}
+
+.score-ring svg {
+  width: 70px; height: 70px;
+  transform: rotate(-90deg);
+}
+
+.score-ring-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 5;
+}
+
+.score-ring-fill {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.score-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-num {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-pct {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.score-summary {
+  flex: 1;
+}
+
+.score-summary-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.confluence-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.05);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.confluence-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+
+.signal-reasons {
+  margin-bottom: 12px;
+}
+
+.reason-item {
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+.reason-item:last-child { border-bottom: none; }
+
+.caution-item {
+  font-size: 11px;
+  color: var(--orange);
+  padding: 4px 0;
+  line-height: 1.5;
+}
+
+.signal-strategy {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
+.signal-strategy-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+/* ─────────────────────────────────────────────────────────
+   BEST SIGNAL BANNER
+───────────────────────────────────────────────────────── */
+.best-signal-banner {
+  background: linear-gradient(135deg, rgba(17,24,39,0.9), rgba(21,30,45,0.9));
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.best-signal-banner::before {
+  content: 'AI RECOMMENDATION';
+  position: absolute;
+  top: -1px; right: 16px;
+  background: var(--gold);
+  color: var(--bg);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 2px 10px;
+  border-radius: 0 0 6px 6px;
+}
+
+.best-signal-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 0% 50%, var(--banner-glow), transparent 60%);
+  pointer-events: none;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.banner-signal-name {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.banner-score-text {
+  font-family: var(--mono);
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.banner-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────────────────────────
+   OPTIONS CHAIN TABLE
+───────────────────────────────────────────────────────── */
+.chain-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.chain-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-family: var(--mono);
+}
+
+.chain-table th {
+  background: #0d1117;
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.chain-table th.ce-head { color: var(--green); background: rgba(0,255,136,0.03); }
+.chain-table th.pe-head { color: var(--red); background: rgba(255,68,102,0.03); }
+.chain-table th.strike-head { color: var(--gold); background: rgba(255,204,0,0.05); }
+
+.chain-table td {
+  padding: 7px 10px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.chain-table tr { transition: background 0.1s; }
+
+.chain-table tr:hover td {
+  background: rgba(255,255,255,0.03);
+}
+
+.chain-table tr.atm-row td {
+  background: rgba(255,204,0,0.05);
+}
+
+.chain-table tr.atm-row .strike-cell {
+  color: var(--gold) !important;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.chain-table tr.ob-supply td.ce-group { background: rgba(255,68,102,0.07); }
+.chain-table tr.ob-demand td.pe-group { background: rgba(0,255,136,0.07); }
+
+.strike-cell {
+  color: var(--text) !important;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 7px 14px !important;
+  position: relative;
+}
+
+.atm-badge {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  font-size: 7px;
+  background: var(--gold);
+  color: var(--bg);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.ce-oi-bar-bg {
+  background: linear-gradient(to left, rgba(0,255,136,0.12) 0%, transparent 100%);
+}
+
+.pe-oi-bar-bg {
+  background: linear-gradient(to right, rgba(255,68,102,0.12) 0%, transparent 100%);
+}
+
+.delta-ce { color: var(--green); }
+.delta-pe { color: var(--red); }
+.gamma-val { color: var(--cyan); }
+.theta-val { color: var(--orange); }
+.vega-val  { color: var(--purple); }
+.iv-val    { color: var(--gold); }
+.oi-add    { color: var(--green); }
+.oi-sub    { color: var(--red); }
+.ltp-val   { color: var(--text); }
+
+/* OI change color coding */
+.chain-table .oi-chg-pos { color: var(--green); }
+.chain-table .oi-chg-neg { color: var(--red); }
+
+/* Scrollable table wrapper */
+.chain-scroll {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* ─────────────────────────────────────────────────────────
+   LOADING STATE
+───────────────────────────────────────────────────────── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  gap: 20px;
+  transition: opacity 0.5s;
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader-ring {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(0,255,136,0.15);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loader-text {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.loader-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+/* ─────────────────────────────────────────────────────────
+   ERROR STATE
+───────────────────────────────────────────────────────── */
+.error-card {
+  background: rgba(255,68,102,0.08);
+  border: 1px solid rgba(255,68,102,0.3);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  color: var(--red);
+}
+
+.error-card h3 { margin-bottom: 8px; }
+.error-card p { font-size: 13px; color: var(--text-muted); }
+.error-card code { font-family: var(--mono); font-size: 12px; }
+
+/* ─────────────────────────────────────────────────────────
+   GEX REGIME INDICATOR
+───────────────────────────────────────────────────────── */
+.gex-regime-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.gex-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.gex-icon.positive { background: var(--green-dim); border: 1px solid rgba(0,255,136,0.2); }
+.gex-icon.negative { background: var(--red-dim); border: 1px solid rgba(255,68,102,0.2); }
+.gex-icon.neutral  { background: var(--blue-dim); border: 1px solid rgba(68,136,255,0.2); }
+
+.gex-details { flex: 1; }
+.gex-title   { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.gex-desc    { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+/* ─────────────────────────────────────────────────────────
+   LIQUIDITY POOLS
+───────────────────────────────────────────────────────── */
+.liq-pool-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.liq-pool-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.liq-pool-item:last-child { border-bottom: none; }
+
+.liq-pool-strike {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cyan);
+}
+
+.liq-pool-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+  flex: 1;
+  margin: 0 12px;
+}
+
+.liq-pool-oi {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────
+   GAMMA FLIP INDICATOR
+───────────────────────────────────────────────────────── */
+.flip-indicator {
+  background: linear-gradient(135deg, rgba(168,85,247,0.08), rgba(68,136,255,0.08));
+  border: 1px solid rgba(168,85,247,0.25);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.flip-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.flip-details {}
+.flip-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 2px;
+}
+
+.flip-value {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--purple);
+}
+
+.flip-sub { font-size: 11px; color: var(--text-muted); }
+
+/* ─────────────────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .grid-5 { grid-template-columns: repeat(3, 1fr); }
+  .smc-info-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-2-1 { grid-template-columns: 1fr; }
+  .chain-table { font-size: 10px; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   ANIMATIONS
+───────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { animation: fadeInUp 0.5s ease forwards; }
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+
+/* Update flash */
+@keyframes flash-update {
+  0%   { background: rgba(0,255,136,0.15); }
+  100% { background: transparent; }
+}
+.updated { animation: flash-update 0.6s ease-out; }
+
+/* Number counter animation */
+.count-up { transition: all 0.8s ease; }
+</style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Initializing SMC Analysis</div>
+  <div class="loader-sub" id="loadingStep">Connecting to NSE...</div>
+</div>
+
+<!-- ─── HEADER ─── -->
+<header class="header">
+  <div class="header-brand">
+    <div class="brand-icon">⚡</div>
+    <div>
+      <div class="brand-title">NIFTY SMC INTELLIGENCE</div>
+      <div class="brand-sub">Order Flow · GEX · Smart Money · AI Signals</div>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <div class="status-dot" id="statusDot"></div>
+    <div class="spot-display">
+      <div class="spot-value mono" id="headerSpot">—</div>
+      <div class="spot-label">NIFTY SPOT</div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="header-meta">
+      <span id="headerExpiry">Expiry: —</span>
+      <span id="headerDTE">DTE: —</span>
+      <span class="highlight" id="headerTime">—</span>
+    </div>
+    <button class="btn-refresh" id="refreshBtn" onclick="loadData()">
+      <span class="refresh-icon" id="refreshIcon">⟳</span>
+      REFRESH
+    </button>
+  </div>
+</header>
+
+<!-- ─── MAIN CONTENT ─── -->
+<main class="main">
+<div class="container">
+
+  <!-- Error placeholder -->
+  <div id="errorPlaceholder" style="display:none;" class="mb-24"></div>
+
+  <!-- ── ROW 1: Key Metrics ── -->
+  <div class="mb-16">
+    <div class="section-title">LIVE MARKET METRICS</div>
+    <div class="grid-5">
+      <div class="metric-card" id="pcrCard">
+        <div class="metric-label">📊 PCR (OI)</div>
+        <div class="metric-value mono" id="pcrValue">—</div>
+        <div class="metric-sub" id="pcrSub">Put-Call Ratio</div>
+      </div>
+      <div class="metric-card gold">
+        <div class="metric-label">🎯 Max Pain</div>
+        <div class="metric-value mono" id="maxPainValue">—</div>
+        <div class="metric-sub" id="maxPainSub">Strike magnet at expiry</div>
+      </div>
+      <div class="metric-card neutral">
+        <div class="metric-label">💰 ATM IV</div>
+        <div class="metric-value mono" id="atmIvValue">—</div>
+        <div class="metric-sub" id="vixSub">India VIX: —</div>
+      </div>
+      <div class="metric-card" id="gexCard">
+        <div class="metric-label">⚡ Total GEX</div>
+        <div class="metric-value mono" id="gexValue">—</div>
+        <div class="metric-sub" id="gexSub">Gamma Exposure</div>
+      </div>
+      <div class="metric-card" id="pcrVolCard">
+        <div class="metric-label">🔄 PCR (VOL)</div>
+        <div class="metric-value mono" id="pcrVolValue">—</div>
+        <div class="metric-sub">Volume-based PCR</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 2: Market Structure + GEX Regime ── -->
+  <div class="mb-24">
+    <div class="section-title">SMC MARKET STRUCTURE — ORDER FLOW FOOTPRINT</div>
+    <div class="grid-2-1">
+
+      <!-- SMC Structure Panel -->
+      <div class="smc-panel">
+        <div class="smc-panel-title">PREMIUM · EQUILIBRIUM · DISCOUNT ZONES</div>
+
+        <!-- Price ruler -->
+        <div class="price-ruler" id="priceRuler">
+          <div class="ruler-zones">
+            <div class="zone-discount"></div>
+            <div class="zone-eq"></div>
+            <div class="zone-premium"></div>
+          </div>
+          <div class="ruler-track"></div>
+          <div class="ruler-marker" id="rulerMarker" style="left: 50%;"></div>
+          <div class="ruler-ob-markers" id="rulerObMarkers"></div>
+          <div class="ruler-labels">
+            <span id="rulerDemand">—</span>
+            <span>EQ</span>
+            <span id="rulerSupply">—</span>
+          </div>
+        </div>
+
+        <!-- Zone badge -->
+        <div style="text-align:center; margin: 12px 0;">
+          <span class="metric-badge" id="zoneBadge">—</span>
+          <span style="font-size:11px; color:var(--text-muted); margin-left:8px;" id="zoneDesc">—</span>
+        </div>
+
+        <div class="smc-info-grid">
+          <div class="smc-info-item">
+            <div class="smc-info-label">🏛️ CE Order Block</div>
+            <div class="smc-info-value" id="ceOBVal" style="color:var(--red)">—</div>
+          </div>
+          <div class="smc-info-item">
+            <div class="smc-info-label">🏛️ PE Order Block</div>
+            <div class="smc-info-value" id="peOBVal" style="color:var(--green)">—</div>
+          </div>
+          <div class="smc-info-item">
+            <div class="smc-info-label">📐 Equilibrium</div>
+            <div class="smc-info-value" id="eqVal" style="color:var(--blue)">—</div>
+          </div>
+          <div class="smc-info-item">
+            <div class="smc-info-label">📈 IV Skew</div>
+            <div class="smc-info-value" id="ivSkewVal">—</div>
+          </div>
+        </div>
+
+        <!-- Institutional Bias -->
+        <div style="margin-top:14px; padding:12px; background:var(--card2); border-radius:var(--radius-sm); border:1px solid var(--border);">
+          <div style="font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">🏦 INSTITUTIONAL FLOW BIAS</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="instBiasEmoji" style="font-size:16px;">—</span>
+            <span id="instBiasDesc" style="font-size:11px; color:var(--text-dim); line-height:1.5;">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: GEX Regime + Gamma Flip + Liq Pools -->
+      <div style="display:flex; flex-direction:column; gap:12px;">
+
+        <!-- GEX Regime -->
+        <div class="gex-regime-card">
+          <div class="gex-icon" id="gexIcon">⚡</div>
+          <div class="gex-details">
+            <div class="gex-title" id="gexRegimeTitle">—</div>
+            <div class="gex-desc" id="gexRegimeDesc">—</div>
+          </div>
+        </div>
+
+        <!-- Gamma Flip -->
+        <div class="flip-indicator">
+          <div class="flip-icon">🔀</div>
+          <div class="flip-details">
+            <div class="flip-label">GAMMA FLIP LEVEL</div>
+            <div class="flip-value" id="gammaFlipValue">—</div>
+            <div class="flip-sub" id="gammaFlipSub">Critical pivot where dealer hedging reverses</div>
+          </div>
+        </div>
+
+        <!-- Liquidity Pools -->
+        <div class="liq-pool-card">
+          <div style="font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--cyan); margin-bottom:10px;">💧 LIQUIDITY POOLS (Stop Cluster Zones)</div>
+          <div id="liqPoolsList">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 3: Order Flow Bars + Charts ── -->
+  <div class="mb-24">
+    <div class="section-title">ORDER FLOW ANALYSIS — OI & GEX CHARTS</div>
+    <div class="grid-1-2">
+
+      <!-- Order Flow Bars -->
+      <div class="flow-panel">
+        <div style="font-size:11px; font-weight:700; letter-spacing:1px; color:var(--text-dim); margin-bottom:16px; text-transform:uppercase;">Live OI Flow</div>
+
+        <div class="flow-row">
+          <div class="flow-label">CE OI Velocity</div>
+          <div class="flow-bar-track">
+            <div class="flow-bar-fill" id="ceVelBar" style="width:50%;"></div>
+          </div>
+          <div class="flow-val" id="ceVelVal">—</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">PE OI Velocity</div>
+          <div class="flow-bar-track">
+            <div class="flow-bar-fill" id="peVelBar" style="width:50%;"></div>
+          </div>
+          <div class="flow-val" id="peVelVal">—</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">CE Writing</div>
+          <div class="flow-bar-track">
+            <div class="flow-bar-fill red" id="ceWriteBar" style="width:0%;"></div>
+          </div>
+          <div class="flow-val" id="ceWriteVal">—</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">PE Writing</div>
+          <div class="flow-bar-track">
+            <div class="flow-bar-fill green" id="peWriteBar" style="width:0%;"></div>
+          </div>
+          <div class="flow-val" id="peWriteVal">—</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">CE Unwinding</div>
+          <div class="flow-bar-track">
+            <div class="flow-bar-fill green" id="ceUnwindBar" style="width:0%;"></div>
+          </div>
+          <div class="flow-val" id="ceUnwindVal">—</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">PE Unwinding</div>
+          <div class="flow-bar-track">
+            <div class="flow-bar-fill red" id="peUnwindBar" style="width:0%;"></div>
+          </div>
+          <div class="flow-val" id="peUnwindVal">—</div>
+        </div>
+
+        <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+          <div style="font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; font-weight:700;">SIGNAL INTERPRETATION</div>
+          <div id="flowInterpretation" style="font-size:11px; color:var(--text-dim); line-height:1.7;">—</div>
+        </div>
+      </div>
+
+      <!-- OI Chart -->
+      <div class="chart-card">
+        <div class="chart-title">
+          OI BY STRIKE — CE vs PE
+          <span class="chart-badge" id="oiChartExpiry">—</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="oiChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- GEX Chart -->
+    <div class="chart-card" style="margin-top:16px;">
+      <div class="chart-title">
+        GAMMA EXPOSURE (GEX) BY STRIKE
+        <span class="chart-badge" id="gexChartTotal">—</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="gexChart"></canvas>
+      </div>
+    </div>
+
+    <!-- OI Change Chart -->
+    <div class="chart-card" style="margin-top:16px;">
+      <div class="chart-title">
+        OI CHANGE BY STRIKE — Institutional Activity
+        <span class="chart-badge">Today's Flow</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="oiChangeChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 4: AI Signals ── -->
+  <div class="mb-24">
+    <div class="section-title">AI SIGNAL ENGINE — SMC + ORDER FLOW CONFLUENCE</div>
+
+    <!-- Best Signal Banner -->
+    <div class="best-signal-banner" id="bestSignalBanner">
+      <div class="banner-content">
+        <div style="font-size:36px;" id="bannerEmoji">—</div>
+        <div>
+          <div style="font-size:10px; font-weight:700; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">STRONGEST SIGNAL</div>
+          <div class="banner-signal-name" id="bannerName">—</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">CONFLUENCE SCORE</div>
+        <div class="banner-score-text" id="bannerScore">—</div>
+      </div>
+      <div class="banner-desc" id="bannerStrategy">—</div>
+    </div>
+
+    <!-- 3 Signal Cards -->
+    <div class="grid-3">
+      <!-- Call Signal -->
+      <div class="signal-card call fade-in">
+        <div class="signal-header">
+          <div class="signal-type">
+            <div class="signal-emoji">🟢</div>
+            <div class="signal-label call">LONG CALL</div>
+          </div>
+          <div class="signal-strength" id="callStrength">—</div>
+        </div>
+
+        <div class="score-ring-wrap">
+          <div class="score-ring">
+            <svg viewBox="0 0 70 70">
+              <circle class="score-ring-track" cx="35" cy="35" r="28"/>
+              <circle class="score-ring-fill" id="callRingFill" cx="35" cy="35" r="28"
+                stroke="var(--green)" stroke-dasharray="175.9" stroke-dashoffset="175.9"/>
+            </svg>
+            <div class="score-ring-text">
+              <span class="score-num" id="callScore" style="color:var(--green)">0</span>
+              <span class="score-pct">/100</span>
+            </div>
+          </div>
+          <div class="score-summary">
+            <div class="score-summary-title">Bullish Confluence</div>
+            <div class="confluence-bar">
+              <div class="confluence-fill" id="callBar" style="width:0%; background:linear-gradient(90deg, rgba(0,255,136,0.5), var(--green));"></div>
+            </div>
+            <div style="font-size:10px; color:var(--text-muted);" id="callConfluenceText">—</div>
+          </div>
+        </div>
+
+        <div class="signal-reasons" id="callReasons">—</div>
+
+        <div id="callCautions"></div>
+
+        <div class="signal-strategy">
+          <div class="signal-strategy-label">📋 STRATEGY</div>
+          <div id="callStrategy">—</div>
+        </div>
+      </div>
+
+      <!-- Put Signal -->
+      <div class="signal-card put fade-in delay-1">
+        <div class="signal-header">
+          <div class="signal-type">
+            <div class="signal-emoji">🔴</div>
+            <div class="signal-label put">LONG PUT</div>
+          </div>
+          <div class="signal-strength" id="putStrength">—</div>
+        </div>
+
+        <div class="score-ring-wrap">
+          <div class="score-ring">
+            <svg viewBox="0 0 70 70">
+              <circle class="score-ring-track" cx="35" cy="35" r="28"/>
+              <circle class="score-ring-fill" id="putRingFill" cx="35" cy="35" r="28"
+                stroke="var(--red)" stroke-dasharray="175.9" stroke-dashoffset="175.9"/>
+            </svg>
+            <div class="score-ring-text">
+              <span class="score-num" id="putScore" style="color:var(--red)">0</span>
+              <span class="score-pct">/100</span>
+            </div>
+          </div>
+          <div class="score-summary">
+            <div class="score-summary-title">Bearish Confluence</div>
+            <div class="confluence-bar">
+              <div class="confluence-fill" id="putBar" style="width:0%; background:linear-gradient(90deg, rgba(255,68,102,0.5), var(--red));"></div>
+            </div>
+            <div style="font-size:10px; color:var(--text-muted);" id="putConfluenceText">—</div>
+          </div>
+        </div>
+
+        <div class="signal-reasons" id="putReasons">—</div>
+
+        <div id="putCautions"></div>
+
+        <div class="signal-strategy">
+          <div class="signal-strategy-label">📋 STRATEGY</div>
+          <div id="putStrategy">—</div>
+        </div>
+      </div>
+
+      <!-- Straddle Signal -->
+      <div class="signal-card straddle fade-in delay-2">
+        <div class="signal-header">
+          <div class="signal-type">
+            <div class="signal-emoji">⚡</div>
+            <div class="signal-label straddle">SHORT STRADDLE</div>
+          </div>
+          <div class="signal-strength" id="straddleStrength">—</div>
+        </div>
+
+        <div class="score-ring-wrap">
+          <div class="score-ring">
+            <svg viewBox="0 0 70 70">
+              <circle class="score-ring-track" cx="35" cy="35" r="28"/>
+              <circle class="score-ring-fill" id="straddleRingFill" cx="35" cy="35" r="28"
+                stroke="var(--gold)" stroke-dasharray="175.9" stroke-dashoffset="175.9"/>
+            </svg>
+            <div class="score-ring-text">
+              <span class="score-num" id="straddleScore" style="color:var(--gold)">0</span>
+              <span class="score-pct">/100</span>
+            </div>
+          </div>
+          <div class="score-summary">
+            <div class="score-summary-title">Range-Bound Confluence</div>
+            <div class="confluence-bar">
+              <div class="confluence-fill" id="straddleBar" style="width:0%; background:linear-gradient(90deg, rgba(255,204,0,0.5), var(--gold));"></div>
+            </div>
+            <div style="font-size:10px; color:var(--text-muted);" id="straddleConfluenceText">—</div>
+          </div>
+        </div>
+
+        <div class="signal-reasons" id="straddleReasons">—</div>
+
+        <div id="straddleCautions"></div>
+
+        <div class="signal-strategy">
+          <div class="signal-strategy-label">📋 STRATEGY</div>
+          <div id="straddleStrategy">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 5: Options Chain ── -->
+  <div class="mb-24">
+    <div class="section-title">OPTIONS CHAIN — GREEKS &amp; ORDER FLOW</div>
+    <div class="chain-wrap">
+      <div class="chain-scroll">
+        <table class="chain-table" id="chainTable">
+          <thead>
+            <tr>
+              <!-- CE Side -->
+              <th class="ce-head">CE OI (L)</th>
+              <th class="ce-head">CE ΔOI</th>
+              <th class="ce-head">CE Vol</th>
+              <th class="ce-head">CE IV%</th>
+              <th class="ce-head">CE Δ</th>
+              <th class="ce-head">CE Γ</th>
+              <th class="ce-head">CE θ</th>
+              <th class="ce-head">CE Vega</th>
+              <th class="ce-head">CE LTP</th>
+              <!-- Strike -->
+              <th class="strike-head">STRIKE</th>
+              <!-- PE Side -->
+              <th class="pe-head">PE LTP</th>
+              <th class="pe-head">PE Vega</th>
+              <th class="pe-head">PE θ</th>
+              <th class="pe-head">PE Γ</th>
+              <th class="pe-head">PE Δ</th>
+              <th class="pe-head">PE IV%</th>
+              <th class="pe-head">PE Vol</th>
+              <th class="pe-head">PE ΔOI</th>
+              <th class="pe-head">PE OI (L)</th>
+            </tr>
+          </thead>
+          <tbody id="chainBody">
+            <tr><td colspan="19" style="text-align:center; padding:40px; color:var(--text-muted); font-family:var(--mono);">Loading option chain...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// NIFTY SMC OPTIONS INTELLIGENCE — FRONTEND ENGINE
+// ═══════════════════════════════════════════════════════════════════
+
+const API = 'http://localhost:8000';
+let oiChart, gexChart, oiChangeChart;
+let _data = null;
+
+// ── CHART DEFAULTS ─────────────────────────────────────────────────
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 10;
+
+function initCharts() {
+  const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 800, easing: 'easeInOutQuart' },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#111827',
+        borderColor: '#1e293b',
+        borderWidth: 1,
+        titleColor: '#e2e8f0',
+        bodyColor: '#94a3b8',
+        padding: 10,
+        callbacks: {}
+      }
+    }
+  };
+
+  // OI Chart
+  const oiCtx = document.getElementById('oiChart').getContext('2d');
+  oiChart = new Chart(oiCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'CE OI',
+          data: [],
+          backgroundColor: 'rgba(0,255,136,0.25)',
+          borderColor: 'rgba(0,255,136,0.7)',
+          borderWidth: 1,
+          borderRadius: 3,
+        },
+        {
+          label: 'PE OI',
+          data: [],
+          backgroundColor: 'rgba(255,68,102,0.25)',
+          borderColor: 'rgba(255,68,102,0.7)',
+          borderWidth: 1,
+          borderRadius: 3,
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { maxRotation: 45, font: { size: 9 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            callback: v => v >= 1e5 ? (v/1e5).toFixed(1)+'L' : v
+          }
+        }
+      },
+      plugins: {
+        ...chartDefaults.plugins,
+        legend: {
+          display: true,
+          labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } }
+        },
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${(ctx.raw/1e5).toFixed(2)}L`
+          }
+        }
+      }
+    }
+  });
+
+  // GEX Chart
+  const gexCtx = document.getElementById('gexChart').getContext('2d');
+  gexChart = new Chart(gexCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: 'Net GEX', data: [], borderRadius: 3, borderWidth: 0 }] },
+    options: {
+      ...chartDefaults,
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { maxRotation: 45, font: { size: 9 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { callback: v => v.toFixed(2)+'B' }
+        }
+      }
+    }
+  });
+
+  // OI Change Chart
+  const oiChgCtx = document.getElementById('oiChangeChart').getContext('2d');
+  oiChangeChart = new Chart(oiChgCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        { label: 'CE ΔOI', data: [], borderRadius: 3, borderWidth: 0 },
+        { label: 'PE ΔOI', data: [], borderRadius: 3, borderWidth: 0 }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { maxRotation: 45, font: { size: 9 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { callback: v => v >= 0 ? '+'+v : ''+v }
+        }
+      },
+      plugins: {
+        ...chartDefaults.plugins,
+        legend: {
+          display: true,
+          labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+// ── LOAD DATA ──────────────────────────────────────────────────────
+async function loadData() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  btn.classList.add('spinning');
+  icon.style.display = 'inline';
+
+  setLoadingStep('Fetching NSE option chain...');
+
+  try {
+    const resp = await fetch(`${API}/api/nifty-analysis`);
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.detail || `HTTP ${resp.status}`);
+    }
+    _data = await resp.json();
+    setLoadingStep('Processing SMC analysis...');
+    await sleep(200);
+    renderAll(_data);
+    hideLoading();
+    hideError();
+  } catch (e) {
+    showError(e.message);
+    hideLoading();
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── RENDER ALL ─────────────────────────────────────────────────────
+function renderAll(d) {
+  renderHeader(d);
+  renderMetrics(d);
+  renderSMCStructure(d);
+  renderOrderFlow(d);
+  renderCharts(d);
+  renderSignals(d);
+  renderChain(d);
+}
+
+// ── HEADER ─────────────────────────────────────────────────────────
+function renderHeader(d) {
+  setText('headerSpot', fmt(d.spot));
+  setText('headerExpiry', `Expiry: ${d.expiry}`);
+  setText('headerDTE', `DTE: ${d.dte} days`);
+  setText('headerTime', d.timestamp);
+}
+
+// ── METRICS ────────────────────────────────────────────────────────
+function renderMetrics(d) {
+  const pcr = d.pcr_oi;
+  const pcrEl = document.getElementById('pcrValue');
+  pcrEl.textContent = pcr.toFixed(3);
+  const pcrCard = document.getElementById('pcrCard');
+  if (pcr > 1.2) {
+    pcrCard.className = 'metric-card bullish';
+    setText('pcrSub', '🟢 Bullish — Excessive put writing');
+    pcrEl.style.color = 'var(--green)';
+  } else if (pcr < 0.8) {
+    pcrCard.className = 'metric-card bearish';
+    setText('pcrSub', '🔴 Bearish — Excessive call writing');
+    pcrEl.style.color = 'var(--red)';
+  } else {
+    pcrCard.className = 'metric-card neutral';
+    setText('pcrSub', '🔵 Neutral zone');
+    pcrEl.style.color = 'var(--text)';
+  }
+
+  setText('maxPainValue', fmt(d.max_pain));
+  const painDiff = d.max_pain - d.spot;
+  setText('maxPainSub', `${painDiff >= 0 ? '▲' : '▼'} ${Math.abs(painDiff).toFixed(0)} pts from spot`);
+
+  setText('atmIvValue', d.atm_iv.toFixed(1) + '%');
+  setText('vixSub', d.vix ? `India VIX: ${d.vix.toFixed(2)}` : 'India VIX: N/A');
+
+  const gexEl = document.getElementById('gexValue');
+  gexEl.textContent = d.total_gex.toFixed(3) + 'B';
+  const gexCard = document.getElementById('gexCard');
+  if (d.total_gex > 0.5) {
+    gexEl.style.color = 'var(--green)';
+    gexCard.className = 'metric-card bullish';
+    setText('gexSub', 'Positive GEX — Stabilizing');
+  } else if (d.total_gex < -0.5) {
+    gexEl.style.color = 'var(--red)';
+    gexCard.className = 'metric-card bearish';
+    setText('gexSub', 'Negative GEX — Explosive');
+  } else {
+    gexEl.style.color = 'var(--gold)';
+    gexCard.className = 'metric-card gold';
+    setText('gexSub', 'Neutral GEX — Transitional');
+  }
+
+  const pcrVol = d.pcr_vol;
+  setText('pcrVolValue', pcrVol.toFixed(3));
+  const pcrVolCard = document.getElementById('pcrVolCard');
+  if (pcrVol > 1.1) {
+    pcrVolCard.className = 'metric-card bullish';
+    document.getElementById('pcrVolValue').style.color = 'var(--green)';
+  } else if (pcrVol < 0.9) {
+    pcrVolCard.className = 'metric-card bearish';
+    document.getElementById('pcrVolValue').style.color = 'var(--red)';
+  } else {
+    pcrVolCard.className = 'metric-card neutral';
+    document.getElementById('pcrVolValue').style.color = 'var(--text)';
+  }
+}
+
+// ── SMC STRUCTURE ─────────────────────────────────────────────────
+function renderSMCStructure(d) {
+  const ms = d.market_structure;
+  const ob = d.order_blocks;
+
+  // Price ruler position
+  const pos = Math.max(2, Math.min(98, ms.position_pct));
+  document.getElementById('rulerMarker').style.left = pos + '%';
+
+  // Zone badge
+  const badge = document.getElementById('zoneBadge');
+  badge.textContent = ms.zone;
+  badge.className = 'metric-badge ' +
+    (ms.zone === 'PREMIUM' ? 'badge-bear' : ms.zone === 'DISCOUNT' ? 'badge-bull' : 'badge-neu');
+  setText('zoneDesc', ms.zone_desc);
+
+  // OB values
+  setText('ceOBVal', ob.supply_strike ? fmt(ob.supply_strike) : '—');
+  setText('peOBVal', ob.demand_strike ? fmt(ob.demand_strike) : '—');
+  setText('eqVal',   fmt(ms.equilibrium));
+
+  // IV Skew
+  const skewEl = document.getElementById('ivSkewVal');
+  const skew = d.order_flow?.iv_skew ?? 1;
+  skewEl.textContent = skew.toFixed(3);
+  skewEl.style.color = skew > 1.1 ? 'var(--red)' : skew < 0.9 ? 'var(--green)' : 'var(--blue)';
+
+  // Ruler labels
+  setText('rulerDemand', ob.demand_strike ? fmt(ob.demand_strike) : '—');
+  setText('rulerSupply', ob.supply_strike ? fmt(ob.supply_strike) : '—');
+
+  // OB markers on ruler
+  const markerContainer = document.getElementById('rulerObMarkers');
+  markerContainer.innerHTML = '';
+  if (ob.supply_strike && ob.demand_strike) {
+    const range = ob.supply_strike - ob.demand_strike;
+    if (range > 0) {
+      // CE OB (supply)
+      const supplyPct = 95; // At right end (it's the max CE OI above spot)
+      const dm = document.createElement('div');
+      dm.className = 'ob-marker supply';
+      dm.style.left = supplyPct + '%';
+      dm.setAttribute('data-label', fmt(ob.supply_strike));
+      markerContainer.appendChild(dm);
+
+      // PE OB (demand)
+      const dm2 = document.createElement('div');
+      dm2.className = 'ob-marker demand';
+      dm2.style.left = '5%';
+      dm2.setAttribute('data-label', fmt(ob.demand_strike));
+      markerContainer.appendChild(dm2);
+    }
+  }
+
+  // Institutional bias
+  const biasEmojis = { 'BULLISH': '🟢', 'BEARISH': '🔴', 'NEUTRAL': '🔵' };
+  setText('instBiasEmoji', biasEmojis[ms.inst_bias] || '—');
+  setText('instBiasDesc', ms.inst_desc);
+
+  // GEX Regime
+  const gexIcon = document.getElementById('gexIcon');
+  setText('gexRegimeTitle', ms.gex_regime.replace('_', ' '));
+  setText('gexRegimeDesc', ms.gex_desc);
+  if (ms.gex_bias === 'RANGE_BOUND' || ms.gex_bias === 'STABLE') {
+    gexIcon.className = 'gex-icon positive';
+    gexIcon.textContent = '🟢';
+  } else if (ms.gex_bias === 'TRENDING' || ms.gex_bias === 'EXPLOSIVE') {
+    gexIcon.className = 'gex-icon negative';
+    gexIcon.textContent = '🔥';
+  } else {
+    gexIcon.className = 'gex-icon neutral';
+    gexIcon.textContent = '⚡';
+  }
+
+  // Gamma Flip
+  if (d.gamma_flip) {
+    setText('gammaFlipValue', fmt(d.gamma_flip));
+    const diff = d.gamma_flip - d.spot;
+    setText('gammaFlipSub', `Spot is ${Math.abs(diff).toFixed(0)} pts ${diff > 0 ? 'BELOW' : 'ABOVE'} flip — ${diff > 0 ? '⚠️ Negative GEX zone' : '✅ Positive GEX zone'}`);
+  } else {
+    setText('gammaFlipValue', 'N/A');
+  }
+
+  // Liquidity Pools
+  const liqList = document.getElementById('liqPoolsList');
+  const pools = ob.liquidity_pools || [];
+  if (pools.length === 0) {
+    liqList.textContent = '—';
+    return;
+  }
+  const maxOI = Math.max(...pools.map(p => {
+    const s = (_data.strikes || []).find(x => x.strike === p);
+    return s ? (s.ce_oi + s.pe_oi) : 1;
+  }));
+  liqList.innerHTML = pools.slice(0, 5).map((pool, i) => {
+    const s = (_data.strikes || []).find(x => x.strike === pool);
+    const totalOI = s ? s.ce_oi + s.pe_oi : 0;
+    const barW = maxOI > 0 ? (totalOI / maxOI * 100) : 0;
+    return `
+      <div class="liq-pool-item">
+        <span class="liq-pool-strike">${fmt(pool)}</span>
+        <div class="liq-pool-bar" style="width:${barW}%"></div>
+        <span class="liq-pool-oi">${(totalOI/1e5).toFixed(1)}L OI</span>
+      </div>`;
+  }).join('');
+}
+
+// ── ORDER FLOW ─────────────────────────────────────────────────────
+function renderOrderFlow(d) {
+  const of = d.order_flow;
+  if (!of) return;
+
+  const maxVel = Math.max(Math.abs(of.ce_oi_velocity || 0), Math.abs(of.pe_oi_velocity || 0), 1);
+  const maxWrite = Math.max(of.ce_writing || 0, of.pe_writing || 0, 1);
+  const maxUnwind = Math.max(of.ce_unwinding || 0, of.pe_unwinding || 0, 1);
+
+  const ceVel = of.ce_oi_velocity || 0;
+  const peVel = of.pe_oi_velocity || 0;
+  setBar('ceVelBar', Math.abs(ceVel) / maxVel * 100, ceVel > 0 ? 'red' : 'green');
+  setBar('peVelBar', Math.abs(peVel) / maxVel * 100, peVel > 0 ? 'green' : 'red');
+  setText('ceVelVal', fmtK(ceVel));
+  setText('peVelVal', fmtK(peVel));
+
+  setBar('ceWriteBar', (of.ce_writing / maxWrite) * 100, 'red');
+  setBar('peWriteBar', (of.pe_writing / maxWrite) * 100, 'green');
+  setText('ceWriteVal', fmtK(of.ce_writing));
+  setText('peWriteVal', fmtK(of.pe_writing));
+
+  setBar('ceUnwindBar', (of.ce_unwinding / maxUnwind) * 100, 'green');
+  setBar('peUnwindBar', (of.pe_unwinding / maxUnwind) * 100, 'red');
+  setText('ceUnwindVal', fmtK(of.ce_unwinding));
+  setText('peUnwindVal', fmtK(of.pe_unwinding));
+
+  // Interpretation
+  let interp = '';
+  if (of.pe_writing > of.ce_writing * 1.3) {
+    interp += '🟢 Heavy PUT WRITING detected — Smart money expects price to stay above PE strikes (BULLISH BIAS)<br>';
+  }
+  if (of.ce_writing > of.pe_writing * 1.3) {
+    interp += '🔴 Heavy CALL WRITING detected — Smart money expects price to stay below CE strikes (BEARISH BIAS)<br>';
+  }
+  if (of.ce_unwinding > of.pe_unwinding * 1.2) {
+    interp += '⚡ CE OI UNWINDING — Call writers exiting = bulls gaining control<br>';
+  }
+  if (of.pe_unwinding > of.ce_unwinding * 1.2) {
+    interp += '⚡ PE OI UNWINDING — Put writers exiting = bears gaining control<br>';
+  }
+  const volR = of.vol_ratio || 1;
+  if (volR > 1.2) {
+    interp += `📊 Volume skewed PUT-heavy (${volR.toFixed(2)}) — More aggressive buying of puts near ATM<br>`;
+  } else if (volR < 0.8) {
+    interp += `📊 Volume skewed CALL-heavy (${volR.toFixed(2)}) — More aggressive buying of calls near ATM<br>`;
+  }
+  if (!interp) interp = '⚪ Balanced order flow — No clear directional bias from volume/OI';
+  document.getElementById('flowInterpretation').innerHTML = interp;
+}
+
+// ── CHARTS ─────────────────────────────────────────────────────────
+function renderCharts(d) {
+  const strikes = d.strikes || [];
+  const gexData = d.gex_data || [];
+
+  // Filter for good display (non-zero OI)
+  const display = strikes.filter(s => s.ce_oi > 0 || s.pe_oi > 0);
+
+  setText('oiChartExpiry', d.expiry);
+
+  // OI Chart
+  oiChart.data.labels = display.map(s => s.strike);
+  oiChart.data.datasets[0].data = display.map(s => s.ce_oi);
+  oiChart.data.datasets[1].data = display.map(s => s.pe_oi);
+
+  // Highlight ATM in OI chart
+  oiChart.data.datasets[0].backgroundColor = display.map(s =>
+    s.strike === d.atm_strike ? 'rgba(0,255,136,0.5)' : 'rgba(0,255,136,0.2)'
+  );
+  oiChart.data.datasets[1].backgroundColor = display.map(s =>
+    s.strike === d.atm_strike ? 'rgba(255,68,102,0.5)' : 'rgba(255,68,102,0.2)'
+  );
+  oiChart.update();
+
+  // GEX Chart
+  const gexDisplay = gexData.filter(g => display.some(s => s.strike === g.strike));
+  setText('gexChartTotal', `Total: ${d.total_gex.toFixed(3)}B`);
+  gexChart.data.labels = gexDisplay.map(g => g.strike);
+  gexChart.data.datasets[0].data = gexDisplay.map(g => g.net_gex);
+  gexChart.data.datasets[0].backgroundColor = gexDisplay.map(g =>
+    g.net_gex >= 0 ? 'rgba(0,255,136,0.5)' : 'rgba(255,68,102,0.5)'
+  );
+  gexChart.data.datasets[0].borderColor = gexDisplay.map(g =>
+    g.net_gex >= 0 ? 'rgba(0,255,136,0.8)' : 'rgba(255,68,102,0.8)'
+  );
+  gexChart.update();
+
+  // OI Change Chart
+  oiChangeChart.data.labels = display.map(s => s.strike);
+  oiChangeChart.data.datasets[0].data = display.map(s => s.ce_oi_change);
+  oiChangeChart.data.datasets[0].backgroundColor = display.map(s =>
+    s.ce_oi_change >= 0 ? 'rgba(0,255,136,0.5)' : 'rgba(255,68,102,0.5)'
+  );
+  oiChangeChart.data.datasets[1].data = display.map(s => s.pe_oi_change);
+  oiChangeChart.data.datasets[1].backgroundColor = display.map(s =>
+    s.pe_oi_change >= 0 ? 'rgba(0,255,136,0.35)' : 'rgba(255,68,102,0.35)'
+  );
+  oiChangeChart.update();
+}
+
+// ── SIGNALS ────────────────────────────────────────────────────────
+function renderSignals(d) {
+  const signals = d.signals || [];
+  const best = d.best_signal || {};
+
+  // Best Signal Banner
+  const banner = document.getElementById('bestSignalBanner');
+  const colorMap = { 'BUY_CALL': 'var(--green)', 'BUY_PUT': 'var(--red)', 'SHORT_STRADDLE': 'var(--gold)' };
+  const glowMap  = { 'BUY_CALL': 'rgba(0,255,136,0.1)', 'BUY_PUT': 'rgba(255,68,102,0.1)', 'SHORT_STRADDLE': 'rgba(255,204,0,0.1)' };
+  const col = colorMap[best.type] || 'var(--text)';
+  banner.style.setProperty('--banner-glow', glowMap[best.type] || 'transparent');
+  banner.style.borderColor = col;
+
+  setText('bannerEmoji', best.emoji || '—');
+  const nameEl = document.getElementById('bannerName');
+  nameEl.textContent = best.label || '—';
+  nameEl.style.color = col;
+  const scoreEl = document.getElementById('bannerScore');
+  scoreEl.textContent = (best.score || 0) + '%';
+  scoreEl.style.color = col;
+  setText('bannerStrategy', best.strategy || '—');
+
+  // Individual signal cards
+  const callSig    = signals.find(s => s.type === 'BUY_CALL')      || {};
+  const putSig     = signals.find(s => s.type === 'BUY_PUT')        || {};
+  const straddleSig= signals.find(s => s.type === 'SHORT_STRADDLE') || {};
+
+  renderSignalCard('call',     callSig,     'callScore',     'callRingFill',     'callStrength',     'callReasons',     'callCautions',     'callBar',     'callConfluenceText',     'callStrategy');
+  renderSignalCard('put',      putSig,      'putScore',      'putRingFill',      'putStrength',      'putReasons',      'putCautions',      'putBar',      'putConfluenceText',      'putStrategy');
+  renderSignalCard('straddle', straddleSig, 'straddleScore', 'straddleRingFill', 'straddleStrength', 'straddleReasons', 'straddleCautions', 'straddleBar', 'straddleConfluenceText', 'straddleStrategy');
+}
+
+function renderSignalCard(type, sig, scoreId, ringId, strengthId, reasonsId, cautionsId, barId, confTextId, stratId) {
+  const score = sig.score || 0;
+  const circumference = 2 * Math.PI * 28; // r=28
+
+  setText(scoreId, score);
+  const ring = document.getElementById(ringId);
+  const offset = circumference - (score / 100) * circumference;
+  ring.style.strokeDashoffset = offset;
+
+  const strengthEl = document.getElementById(strengthId);
+  strengthEl.textContent = sig.strength || '—';
+  strengthEl.className = 'signal-strength strength-' + (sig.strength || 'weak').toLowerCase();
+
+  document.getElementById(barId).style.width = score + '%';
+  setText(confTextId, `${score}/100 confluence — ${sig.strength || '—'}`);
+
+  // Reasons
+  const reasonsEl = document.getElementById(reasonsId);
+  const reasons = sig.reasons || [];
+  if (reasons.length === 0) {
+    reasonsEl.innerHTML = '<div class="reason-item" style="color:var(--text-muted)">No bullish confluences detected</div>';
+  } else {
+    reasonsEl.innerHTML = reasons.map(r =>
+      `<div class="reason-item">${r}</div>`
+    ).join('');
+  }
+
+  // Cautions
+  const cautionsEl = document.getElementById(cautionsId);
+  const cautions = sig.cautions || [];
+  if (cautions.length === 0) {
+    cautionsEl.innerHTML = '';
+  } else {
+    cautionsEl.innerHTML = '<div style="margin-top:8px;">' +
+      cautions.map(c => `<div class="caution-item">${c}</div>`).join('') +
+      '</div>';
+  }
+
+  setText(stratId, sig.strategy || '—');
+}
+
+// ── OPTIONS CHAIN TABLE ────────────────────────────────────────────
+function renderChain(d) {
+  const strikes = d.strikes || [];
+  const atm = d.atm_strike;
+  const supplyOB = d.order_blocks?.supply_strike;
+  const demandOB = d.order_blocks?.demand_strike;
+
+  const maxCEOI = Math.max(...strikes.map(s => s.ce_oi), 1);
+  const maxPEOI = Math.max(...strikes.map(s => s.pe_oi), 1);
+
+  const tbody = document.getElementById('chainBody');
+  tbody.innerHTML = strikes.map(s => {
+    const isATM     = s.strike === atm;
+    const isSupply  = s.strike === supplyOB;
+    const isDemand  = s.strike === demandOB;
+
+    const ceBg = `rgba(0,255,136,${(s.ce_oi / maxCEOI) * 0.18})`;
+    const peBg = `rgba(255,68,102,${(s.pe_oi / maxPEOI) * 0.18})`;
+
+    const rowClass = isATM ? 'atm-row' : isSupply ? 'ob-supply' : isDemand ? 'ob-demand' : '';
+
+    const ceChgCls = s.ce_oi_change > 0 ? 'oi-chg-pos' : s.ce_oi_change < 0 ? 'oi-chg-neg' : '';
+    const peChgCls = s.pe_oi_change > 0 ? 'oi-chg-pos' : s.pe_oi_change < 0 ? 'oi-chg-neg' : '';
+
+    return `<tr class="${rowClass}">
+      <td class="ce-group" style="background:${ceBg}">${(s.ce_oi/1e5).toFixed(2)}L</td>
+      <td class="${ceChgCls} ce-group">${fmtChg(s.ce_oi_change)}</td>
+      <td class="ce-group">${fmtK(s.ce_volume)}</td>
+      <td class="iv-val ce-group">${s.ce_iv > 0 ? s.ce_iv.toFixed(1)+'%' : '—'}</td>
+      <td class="delta-ce ce-group">${s.ce_delta !== 0 ? s.ce_delta.toFixed(3) : '—'}</td>
+      <td class="gamma-val ce-group">${s.ce_gamma !== 0 ? s.ce_gamma.toFixed(5) : '—'}</td>
+      <td class="theta-val ce-group">${s.ce_theta !== 0 ? s.ce_theta.toFixed(1) : '—'}</td>
+      <td class="vega-val ce-group">${s.ce_vega !== 0 ? s.ce_vega.toFixed(1) : '—'}</td>
+      <td class="ltp-val ce-group">${s.ce_ltp > 0 ? s.ce_ltp.toFixed(1) : '—'}</td>
+      <td class="strike-cell">
+        ${s.strike}
+        ${isATM ? '<span class="atm-badge">ATM</span>' : ''}
+        ${isSupply ? '<span style="font-size:7px;color:var(--red);margin-left:2px;">⛔OB</span>' : ''}
+        ${isDemand ? '<span style="font-size:7px;color:var(--green);margin-left:2px;">✅OB</span>' : ''}
+      </td>
+      <td class="ltp-val pe-group">${s.pe_ltp > 0 ? s.pe_ltp.toFixed(1) : '—'}</td>
+      <td class="vega-val pe-group">${s.pe_vega !== 0 ? s.pe_vega.toFixed(1) : '—'}</td>
+      <td class="theta-val pe-group">${s.pe_theta !== 0 ? s.pe_theta.toFixed(1) : '—'}</td>
+      <td class="gamma-val pe-group">${s.pe_gamma !== 0 ? s.pe_gamma.toFixed(5) : '—'}</td>
+      <td class="delta-pe pe-group">${s.pe_delta !== 0 ? s.pe_delta.toFixed(3) : '—'}</td>
+      <td class="iv-val pe-group">${s.pe_iv > 0 ? s.pe_iv.toFixed(1)+'%' : '—'}</td>
+      <td class="pe-group">${fmtK(s.pe_volume)}</td>
+      <td class="${peChgCls} pe-group">${fmtChg(s.pe_oi_change)}</td>
+      <td class="pe-group" style="background:${peBg}">${(s.pe_oi/1e5).toFixed(2)}L</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setBar(id, pct, color) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.style.width = Math.min(100, Math.max(0, pct)) + '%';
+    el.className = `flow-bar-fill ${color}`;
+  }
+}
+
+function fmt(n) {
+  return n ? n.toLocaleString('en-IN') : '—';
+}
+
+function fmtK(n) {
+  if (!n && n !== 0) return '—';
+  if (Math.abs(n) >= 1e5) return (n / 1e5).toFixed(1) + 'L';
+  if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function fmtChg(n) {
+  if (!n && n !== 0) return '—';
+  const v = fmtK(Math.abs(n));
+  return n >= 0 ? '+' + v : '-' + v;
+}
+
+function setLoadingStep(msg) {
+  const el = document.getElementById('loadingStep');
+  if (el) el.textContent = msg;
+}
+
+function hideLoading() {
+  const el = document.getElementById('loadingOverlay');
+  if (el) el.classList.add('hidden');
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorPlaceholder');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="error-card">
+      <h3>⚠️ Backend Connection Failed</h3>
+      <p>Could not connect to the SMC analysis engine at <code>${API}</code></p>
+      <p style="margin-top:8px;">Error: <code>${msg}</code></p>
+      <p style="margin-top:12px;">Make sure the FastAPI backend is running:<br>
+        <code>cd backend && uvicorn main:app --reload</code>
+      </p>
+    </div>`;
+}
+
+function hideError() {
+  const el = document.getElementById('errorPlaceholder');
+  el.style.display = 'none';
+  el.innerHTML = '';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initCharts();
+  loadData();
+  // Auto-refresh every 5 minutes during market hours
+  setInterval(loadData, 300_000);
+});
+</script>
+</body>
+</html>
