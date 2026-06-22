@@ -438,7 +438,7 @@ async def nifty_analysis(response: Response):
         market_str = analyze_market_structure(strikes_data, spot, pcr_oi, total_gex, order_flow)
         signals, best = generate_signals(spot, pcr_oi, total_gex, gamma_flip, max_pain,
                                          market_str, order_flow, atm_iv, None, atm_strike)
-        display = [s for s in strikes_data if abs(s["strike"]-atm_strike) <= 1500]
+        display = [s for s in strikes_data if abs(s["strike"]-atm_strike) <= 300]
         sob = order_flow.get("supply_ob")
         dob = order_flow.get("demand_ob")
 
