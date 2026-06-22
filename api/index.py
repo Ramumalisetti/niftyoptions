@@ -4,7 +4,7 @@ Uses Playwright (real Chromium) during market hours,
 falls back to realistic synthetic data when NSE is closed.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
@@ -379,7 +379,9 @@ def generate_signals(spot, pcr, total_gex, gamma_flip, max_pain, market_str, ord
 # ─────────────────────────────────────────────────────────────────────────────
 
 @app.get("/api/nifty-analysis")
-async def nifty_analysis():
+async def nifty_analysis(response: Response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    
     try:
         loop = asyncio.get_event_loop()
         raw  = await loop.run_in_executor(None, fetch_nse_data)
@@ -472,7 +474,7 @@ async def health():
 
 @app.get("/")
 async def root():
-    return FileResponse("index.html")
+    return FileResponse("index.html", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
 if __name__ == "__main__":
