@@ -2029,13 +2029,13 @@ function renderCharts(d) {
 
   // OI Change Chart
   oiChangeChart.data.labels = display.map(s => s.strike);
-  oiChangeChart.data.datasets[0].data = display.map(s => s.ce_oi_change);
+  oiChangeChart.data.datasets[0].data = display.map(s => s.ce_oi_chg);
   oiChangeChart.data.datasets[0].backgroundColor = display.map(s =>
-    s.ce_oi_change >= 0 ? 'rgba(0,255,136,0.5)' : 'rgba(255,68,102,0.5)'
+    s.ce_oi_chg >= 0 ? 'rgba(0,255,136,0.5)' : 'rgba(255,68,102,0.5)'
   );
-  oiChangeChart.data.datasets[1].data = display.map(s => s.pe_oi_change);
+  oiChangeChart.data.datasets[1].data = display.map(s => s.pe_oi_chg);
   oiChangeChart.data.datasets[1].backgroundColor = display.map(s =>
-    s.pe_oi_change >= 0 ? 'rgba(0,255,136,0.35)' : 'rgba(255,68,102,0.35)'
+    s.pe_oi_chg >= 0 ? 'rgba(0,255,136,0.35)' : 'rgba(255,68,102,0.35)'
   );
   oiChangeChart.update();
 }
@@ -2140,12 +2140,12 @@ function renderChain(d) {
 
     const rowClass = isATM ? 'atm-row' : isSupply ? 'ob-supply' : isDemand ? 'ob-demand' : '';
 
-    const ceChgCls = s.ce_oi_change > 0 ? 'oi-chg-pos' : s.ce_oi_change < 0 ? 'oi-chg-neg' : '';
-    const peChgCls = s.pe_oi_change > 0 ? 'oi-chg-pos' : s.pe_oi_change < 0 ? 'oi-chg-neg' : '';
+    const ceChgCls = s.ce_oi_chg > 0 ? 'oi-chg-pos' : s.ce_oi_chg < 0 ? 'oi-chg-neg' : '';
+    const peChgCls = s.pe_oi_chg > 0 ? 'oi-chg-pos' : s.pe_oi_chg < 0 ? 'oi-chg-neg' : '';
 
     return `<tr class="${rowClass}">
       <td class="ce-group" style="background:${ceBg}">${(s.ce_oi/1e5).toFixed(2)}L</td>
-      <td class="${ceChgCls} ce-group">${fmtChg(s.ce_oi_change)}</td>
+      <td class="${ceChgCls} ce-group">${fmtChg(s.ce_oi_chg)}</td>
       <td class="ce-group">${fmtK(s.ce_volume)}</td>
       <td class="iv-val ce-group">${s.ce_iv > 0 ? s.ce_iv.toFixed(1)+'%' : '—'}</td>
       <td class="delta-ce ce-group">${s.ce_delta !== 0 ? s.ce_delta.toFixed(3) : '—'}</td>
@@ -2166,7 +2166,7 @@ function renderChain(d) {
       <td class="delta-pe pe-group">${s.pe_delta !== 0 ? s.pe_delta.toFixed(3) : '—'}</td>
       <td class="iv-val pe-group">${s.pe_iv > 0 ? s.pe_iv.toFixed(1)+'%' : '—'}</td>
       <td class="pe-group">${fmtK(s.pe_volume)}</td>
-      <td class="${peChgCls} pe-group">${fmtChg(s.pe_oi_change)}</td>
+      <td class="${peChgCls} pe-group">${fmtChg(s.pe_oi_chg)}</td>
       <td class="pe-group" style="background:${peBg}">${(s.pe_oi/1e5).toFixed(2)}L</td>
     </tr>`;
   }).join('');
